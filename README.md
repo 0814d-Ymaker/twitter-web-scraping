@@ -1,212 +1,116 @@
-# 推特图片下载   &nbsp; (๑¯◡¯๑) 
-推特 图片 & 视频 & 文本 下载，以用户名为参数，爬取该用户推文中的图片与视频(含gif)
+# Twitter/X Web Scraping Project
 
-支持排除转推内容 & 多用户爬取 & 时间范围限制 & 按Tag获取 & 纯文本获取 & 高级搜索 & 评论区下载
+This repository contains my implementation of a Twitter/X web scraping task based on the open-source `twitter_download` project.
 
---- 
-## Disclaimer / 免责声明
+Original project: https://github.com/caolvchong-top/twitter_download
 
-> **EN**
-> 
-> 1. This project is strictly for programming learning, academic research, and personal practice.
-> 
-> 2. The intellectual property of all media content (images, videos, etc.) downloaded using this tool belongs to the original authors and the respective platforms. Please respect relevant copyrights.
-> 
-> 3. Users must comply with applicable laws, the target platform's Terms of Service, and relevant copyright regulations. Do not use this tool for malicious scraping, copyright infringement, illegal distribution, or other unlawful activities.
-> 
-> 4. The developer assumes no responsibility for any violations, legal disputes, or direct/indirect losses caused by the improper use of this tool. Use at your own risk.
-> 
+The project was used as a practical exercise in undergraduate research. The main task was to collect 10,000 tweets containing the word `Trump` within a specified search period and to validate the final dataset.
 
-<br>
+## Project Result
 
-> **ZH**
-> 
-> 1. 本项目仅供编程学习交流、学术研究及个人练习使用。
-> 
-> 2. 使用本工具下载的所有媒体内容（图片、视频等）的知识产权均归原作者及所属平台所有，请尊重相关版权。
-> 
-> 3. 请勿将本工具及所获取的数据用于恶意抓取、侵权传播或其他违法用途。
-> 
-> 4. 开发者不对任何因不当使用本工具而导致的违规行为、法律纠纷或直接/间接损失承担责任。请风险自担。
-> 
----
-**目前老马加了API的请求次数限制** 
-``` 
-当程序抛出：Rate limit exceeded 
-即表示该账号当日的API调用次数已耗尽
+The search period was configured as:
 
-if 选择包含转推:
-  爬完一个用户需要调用的API次数约为:总推数(含转推) / 19
-elif 不包含:
-  会大大减少API调用次数
+`since:2026-09-10 until:2026-10-01`
 
-下载不计入次数 
-```
+The final dataset is stored in:
 
-# Change Log 
-* **2025-08-09** 
-  * 支持获取用户主页内容(头像&banner&简介)--**请直接配置profile_down.py文件并运行**
+`Trump_10000_tweets.csv`
 
-* **2025-04-26** 
-  * 替换部分失效接口 
-  * `tag_down reply_down`增加`X-Client-Transaction-ID`校验, 请重新运行`pip install -r requirements.txt`安装依赖 
-  * // 目前生成的`transaction-id`仍有小概率失效, 当程序抛出`获取数据失败`时可以尝试重新运行 
-  * 目前`main text_down`似乎未受`X-Client-Transaction-ID`校验影响 
-  * Reference: `https://github.com/iSarabjitDhiman/XClientTransaction`
+Final validation results:
 
-* **2025-03-03** 
-  * 支持下载评论区(指定用户或推文链接)--**请直接配置reply_down.py文件并运行**
+1. Total tweets: 10,000
+2. Unique Tweet URLs: 10,000
+3. Tweets with `Trump` in Tweet Content: 10,000
+4. Tweets outside the configured date range: 0
 
-* **2024-05-24** 
-  * 按Tag获取支持保存文本内容 
+Although the search range was configured from September 10 to September 30, 2026, the collected results were concentrated on September 30 because of the large number of available search results.
 
-* **2024-05-11**
-  * 支持获取纯文本推文--**请直接配置text_down.py文件并运行**
-    
-    // (下方有预览) 注意，此功能会大量消耗API次数(参考上方公式)，默认排除转推内容
-* **2024-05-10**
-  * 支持按Tag获取--**请直接配置tag_down.py文件并运行**
-  
-    // 保存格式 (下方有预览)：. / {#Tag} / {datetime} \_ {@username} \_ { md5( media_url )[:4] } . { png / mp4 }
+## Main Modifications
 
-* **2024-03-09**
-  * 支持记录已下载内容,避免重复下载 (如有问题请发issue)
-  * 支持自动同步最新内容
-* **2024-01-16**
-  * 适配 [ **喜欢(Likes)** ] 标签页 
-* **2024-01-10**
-  * 新增统计数据 [ **Favorite, Retweet, Reply** ]
-* **2024-01-05**
-  * 适配Twieer新标签页 [ **亮点(HighLights)** ]
-* **2023-12-12**
-  * 适配Twitter新API
-* **2023-10-12**
-  * 添加 生成爬取信息 功能
-* **2023-10-06**
-  * 添加 时间范围限制 功能
-  * 统一文件保存格式
-    * 文件夹：用户id (@后面的)
-    * 文件：推文日期-[img/vid]_下载计数.文件后缀
-      
-* **2023-09-15**
-  * 添加 视频下载 功能
- 
----
+Several changes were made to the original project during the task.
 
-<div align="center"> 
+### 1. Transaction ID Generation
 
-| ![e53923662b627a645fcd2b0b3feadb3b](https://github.com/caolvchong-top/twitter_download/assets/57820488/39da9658-f40f-40d6-8480-9dff850076da) |
-|:--:| 
-| **(๑´ڡ`๑)** | 
+The original transaction ID generation process did not work correctly with the current Twitter/X webpage response.
 
-</div>
+`transaction_generate.py` was modified to create an authenticated `requests.Session()`, add the required headers and Cookie, and use this session when retrieving the X webpage required for transaction ID generation.
 
-部署
---- 
+### 2. HTTP 429 Handling
 
-**Linux** : 
-``` 
-git clone https://github.com/caolvchong-top/twitter_download.git 
-cd twitter_download 
-pip3 install -r requirements.txt
+During large-scale scraping, Twitter/X returned HTTP 429 after the request limit was reached.
 
-#Python版本须>=3.8  httpx==0.28.1
-``` 
-**运行** : 
-``` 
-配置settings.json文件
-python3 main.py 
-``` 
-**Windows** 和上面的一样，配置完setting.json后运行main.py即可 
+The request logic in `tag_down.py` was modified to check the HTTP status code before JSON parsing. When HTTP 429 is returned, the current scraping round stops normally instead of attempting to parse the response as JSON.
 
+### 3. Cursor-Based Resumable Scraping
 
-注意事项
----
+Since approximately 1,000 tweets could normally be collected before the request limit was reached, cursor persistence was added to support scraping across multiple runs.
 
-**按Tag下载&高级搜索 --> tag_down.py** 
+The latest cursor is saved locally during execution and can be loaded when the program is started again. This allows scraping to continue from the previous search position instead of restarting from the beginning.
 
-**下载评论区 --> reply_down.py** 
+### 4. Data Merging and Validation
 
-**指定用户纯文本推文获取 --> text_down.py** 
+`merge_csv.py` was added for final data processing.
 
-**指定用户媒体文件获取&转推&亮点&喜欢(只能本人账号)等 --> main.py + settings.json** 
+It performs the following operations:
 
-其余各种不能解决的需求建议试试tag_down的高级搜索, 或是提交Issue 
+1. Reads the collected CSV data.
+2. Keeps only records whose Tweet Content contains `Trump`.
+3. Removes duplicate tweets based on Tweet URL.
+4. Generates the final dataset containing exactly 10,000 valid records.
 
+## Main Files
 
-Tag_Down 功能扩展 (高级搜索) &nbsp;&nbsp; <sub>//万金油</sub> 
----
-~~其实按功能应该叫`search_down`~~
+`main.py`  
+Original entry point for the basic downloading functionality.
 
-对于部分主程序难以实现的需求可以尝试配置`tag_down.py`的`filter`来曲线解决: 
+`tag_down.py`  
+Keyword-based tweet scraping, including HTTP 429 handling and cursor-based continuation.
 
-|部分例子|
-|:--:|
-|大批量下载 -> 分批下载|
-|指定时间范围|
-|各类关键词搜索/排除|
-|指定/排除目标用户|
-|指定大于互动量的推文|
-|指定推文语言|
-|......| 
+`transaction_generate.py`  
+Transaction ID generation with authenticated session handling.
 
-``` 
-// 配置
+`merge_csv.py`  
+Final keyword filtering, Tweet URL deduplication, and dataset generation.
 
-tag = '#ヨルクラ'
-# 填入tag 带上#号 可留空
-_filter = ""
-# (可选项) 高级搜索
-# 请在 https://x.com/search-advanced 中组装搜索条件，复制搜索栏的内容填入_filter
-# 注意，_filter中所有出现的双引号都需要改为单引号或添加转义符 例如 "Monika" -> 'Monika'
+`Trump_10000_tweets.csv`  
+Final validated dataset containing 10,000 tweets.
 
-# 当tag选项留空时，将尝试以_filter的内容作为文件夹名称
-``` 
-推特高级搜索：https://x.com/search-advanced 
+`settings.json`  
+Configuration file for local execution.
 
-实例参考：https://github.com/caolvchong-top/twitter_download/issues/63#issuecomment-2351039320 & https://github.com/caolvchong-top/twitter_download/issues/106
+`requirements.txt`  
+Python dependency information.
 
+## Configuration
 
-效果预览
----
-![20230720134231](https://github.com/caolvchong-top/twitter_download/assets/57820488/ee6a1c13-2b0c-47e9-a260-1ac529bec678) 
+Twitter/X authentication information is required for local execution.
 
+Authentication credentials are intentionally not included in this repository. Users must provide their own valid Cookie information locally before running the scraper.
 
-**↑↑老版本的图，仅效果参考**
+Do not upload personal authentication credentials to a public repository.
 
+## Dependencies
 
-![20230720134253](https://github.com/caolvchong-top/twitter_download/assets/57820488/6e5ba42f-2dc4-4fa1-8cf6-152246378756)
+The project uses Python and the dependencies listed in `requirements.txt`.
 
+The main listed dependencies are:
 
-**评论区下载 Reply_down.py** 
+`httpx==0.28.1`
 
-![asehniubnsiebfi](https://github.com/user-attachments/assets/43708c8f-528d-4000-bf45-409a53ee3bc7)
+`XClientTransaction==1.0.3`
 
- 
-**按Tag获取 Tag_down.py** 
+## Notes
 
-![image](https://github.com/caolvchong-top/twitter_download/assets/57820488/aa109e18-5ef1-4d77-902c-658ed1b3ff53)
+Twitter/X may apply request rate limits during scraping. This project does not attempt to bypass these limits. When HTTP 429 is returned, the current scraping round is stopped and scraping can be resumed later using the saved cursor.
 
-**纯文本推文获取(仅文本) Text_down.py** 
+The project is intended for programming learning and academic research. Users should comply with applicable laws, platform rules, and relevant data and copyright requirements.
 
-![QQ截图20240511032859](https://github.com/caolvchong-top/twitter_download/assets/57820488/0998b6b1-c313-4b1d-a78e-525a666098b2)
+## Acknowledgement
 
+This project is based on the open-source `twitter_download` repository created by its original author:
 
+https://github.com/caolvchong-top/twitter_download
 
-**图片下载效果**
-
-![test1](https://github.com/caolvchong-top/twitter_download/assets/57820488/736f7554-612b-4bec-8baf-4a5ab45c6e04)
-
-
-**视频下载效果**
-
-![test2](https://github.com/caolvchong-top/twitter_download/assets/57820488/6f732042-6f96-4e7a-bd16-e7d08a46a90e)
-
-
-
-**生成CSV统计**
-
-![屏幕截图 2023-10-12 223755](https://github.com/caolvchong-top/twitter_download/assets/57820488/b5dfc741-e10f-409a-b298-d56ea236bc5f)
-
+The original project and its license are retained in this repository. The modifications described above were made as part of this web scraping exercise.
 
 
